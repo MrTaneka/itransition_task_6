@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faker SQL - Random User Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d3d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .tagline { color: var(--text-secondary); font-size: 1.1rem; }
+        .controls-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .form-group input, .form-group select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .btn:active { transform: translateY(0); }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            box-shadow: none;
+        }
+        .btn-group { display: flex; gap: 0.5rem; }
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .stat-item { display: flex; flex-direction: column; gap: 0.25rem; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-title { font-size: 1.125rem; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 1rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-secondary); }
+        .user-name { font-weight: 600; color: var(--text-primary); }
+        .user-email { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent); }
+        .user-address { font-size: 0.8rem; color: var(--text-secondary); white-space: pre-line; }
+        .coords { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+        .physical-attrs { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+        .badge-male { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-female { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+        .loading { display: flex; align-items: center; justify-content: center; padding: 4rem; color: var(--text-muted); }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.5; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .controls-panel { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; gap: 1rem; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 800px; }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+        .benchmark-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+        .benchmark-stat { text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; }
+        .benchmark-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 600; color: var(--success); }
+        .benchmark-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">🎲 Faker SQL</h1>
+            <p class="tagline">Generate random, reproducible fake user data powered by SQL stored procedures</p>
+        </div>
+    </header>
+    <main class="container">
+        <div class="controls-panel">
+            <div class="form-group">
+                <label for="locale">Locale</label>
+                <select id="locale">
+                    {% for locale in locales %}
+                    <option value="{{ locale.code }}">{{ locale.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="seed">Seed Value</label>
+                <input type="number" id="seed" value="12345" min="0" placeholder="Enter seed...">
+            </div>
+            <div class="form-group">
+                <label for="batchSize">Batch Size</label>
+                <select id="batchSize">
+                    <option value="10" selected>10 users</option>
+                    <option value="20">20 users</option>
+                    <option value="50">50 users</option>
+                    <option value="100">100 users</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="includeBio">Include Bio</label>
+                <select id="includeBio">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes (Markov)</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn" onclick="generateUsers()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Generate
+                </button>
+                <button class="btn btn-secondary" onclick="nextBatch()">Next Batch →</button>
+            </div>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Current Batch</span>
+                <span class="stat-value" id="statBatch">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Generated</span>
+                <span class="stat-value" id="statTotal">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Locale</span>
+                <span class="stat-value" id="statLocale">en_US</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Seed</span>
+                <span class="stat-value" id="statSeed">12345</span>
+            </div>
+            <div class="stat-item" style="margin-left: auto;">
+                <button class="btn btn-secondary" onclick="runBenchmark()">⚡ Run Benchmark</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <div class="table-header">
+                <span class="table-title">Generated Users</span>
+                <button class="btn btn-secondary" onclick="exportJSON()">Export JSON</button>
+            </div>
+            <div id="tableContent">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <p>No users generated yet</p>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">Click "Generate" to create fake user data</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div class="modal" id="benchmarkModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">⚡ Benchmark Results</h3>
+                <button class="modal-close" onclick="closeBenchmark()">&times;</button>
+            </div>
+            <div id="benchmarkContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Running benchmark...
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentBatchIndex = 0;
+        let totalGenerated = 0;
+        let currentUsers = [];
+
+        async function generateUsers(batchIndex = 0) {
+            const locale = document.getElementById('locale').value;
+            const seed = document.getElementById('seed').value;
+            const batchSize = document.getElementById('batchSize').value;
+            const includeBio = document.getElementById('includeBio').value;
+            showLoading();
+            try {
+                const response = await fetch(`/api/generate?locale=${locale}&seed=${seed}&batch_index=${batchIndex}&batch_size=${batchSize}&include_bio=${includeBio}`);
+                const data = await response.json();
+                if (data.success) {
+                    currentBatchIndex = data.data.batch_index;
+                    currentUsers = data.data.users;
+                    totalGenerated = (currentBatchIndex + 1) * parseInt(batchSize);
+                    updateStats(locale, seed);
+                    renderUsers(data.data.users);
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Failed to connect to server');
+            }
+        }
+
+        function nextBatch() { generateUsers(currentBatchIndex + 1); }
+
+        function updateStats(locale, seed) {
+            document.getElementById('statBatch').textContent = currentBatchIndex;
+            document.getElementById('statTotal').textContent = totalGenerated;
+            document.getElementById('statLocale').textContent = locale;
+            document.getElementById('statSeed').textContent = seed;
+        }
+
+        function showLoading() {
+            document.getElementById('tableContent').innerHTML = `
+                <div class="loading"><div class="spinner"></div>Generating users...</div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('tableContent').innerHTML = `
+                <div class="empty-state" style="color: var(--error);"><p>Error: ${message}</p></div>
+            `;
+        }
+
+        function renderUsers(users) {
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name / Email</th>
+                            <th>Address</th>
+                            <th>Coordinates</th>
+                            <th>Physical</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.record_index}</td>
+                                <td>
+                                    <div class="user-name">${escapeHtml(user.full_name)}</div>
+                                    <div class="user-email">${escapeHtml(user.email)}</div>
+                                    <span class="badge badge-${user.gender}">${user.gender}</span>
+                                </td>
+                                <td><div class="user-address">${escapeHtml(user.address)}</div></td>
+                                <td><div class="coords">${user.latitude.toFixed(6)}°<br>${user.longitude.toFixed(6)}°</div></td>
+                                <td>
+                                    <div class="physical-attrs">
+                                        <span>📏 ${user.height_cm.toFixed(1)} cm</span>
+                                        <span>⚖️ ${user.weight_kg.toFixed(1)} kg</span>
+                                        <span>👁️ ${escapeHtml(user.eye_color)}</span>
+                                    </div>
+                                </td>
+                                <td><code>${escapeHtml(user.phone)}</code></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('tableContent').innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function runBenchmark() {
+            const modal = document.getElementById('benchmarkModal');
+            const content = document.getElementById('benchmarkContent');
+            modal.classList.add('active');
+            content.innerHTML = `<div class="loading"><div class="spinner"></div>Running benchmark (1000 users)...</div>`;
+            try {
+                const locale = document.getElementById('locale').value;
+                const response = await fetch(`/api/benchmark?locale=${locale}&iterations=1000`);
+                const data = await response.json();
+                if (data.success) {
+                    content.innerHTML = `
+                        <div class="benchmark-results">
+                            <div class="benchmark-stat">
+                                <div class="benchmark-value">${data.data.users_generated}</div>
+                                <div class="benchmark-label">Users Generated</div>
+                            </div>
+                            <div class="benchmark-stat">
+                                <div class="benchmark-value">${data.data.duration_ms.toFixed(0)}ms</div>
+                                <div class="benchmark-label">Duration</div>
+                            </div>
+                            <div class="benchmark-stat">
+                                <div class="benchmark-value">${data.data.users_per_second.toFixed(0)}</div>
+                                <div class="benchmark-label">Users/Second</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `<p style="color: var(--error);">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                content.innerHTML = `<p style="color: var(--error);">Failed to run benchmark</p>`;
+            }
+        }
+
+        function closeBenchmark() { document.getElementById('benchmarkModal').classList.remove('active'); }
+
+        function exportJSON() {
+            if (currentUsers.length === 0) { alert('No users to export. Generate some first!'); return; }
+            const dataStr = JSON.stringify(currentUsers, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `faker_users_batch_${currentBatchIndex}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('benchmarkModal').addEventListener('click', function(e) {
+            if (e.target === this) closeBenchmark();
+        });
+    </script>
+</body>
+</html>
