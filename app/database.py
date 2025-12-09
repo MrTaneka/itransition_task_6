@@ -16,11 +16,25 @@ class DatabaseConfig:
     """Configuration class for database connection."""
     
     def __init__(self):
-        self.host = os.environ.get('DB_HOST', 'localhost')
-        self.port = int(os.environ.get('DB_PORT', 5432))
-        self.database = os.environ.get('DB_NAME', 'faker_db')
-        self.user = os.environ.get('DB_USER', 'faker_user')
-        self.password = os.environ.get('DB_PASSWORD', 'faker_password')
+        # Support DATABASE_URL format (used by Render, Heroku, etc.)
+        database_url = os.environ.get('DATABASE_URL')
+        
+        if database_url:
+            # Parse DATABASE_URL
+            import urllib.parse
+            parsed = urllib.parse.urlparse(database_url)
+            self.host = parsed.hostname or 'localhost'
+            self.port = parsed.port or 5432
+            self.database = parsed.path[1:] if parsed.path else 'faker_db'
+            self.user = parsed.username or 'faker_user'
+            self.password = parsed.password or 'faker_password'
+        else:
+            self.host = os.environ.get('DB_HOST', 'localhost')
+            self.port = int(os.environ.get('DB_PORT', 5432))
+            self.database = os.environ.get('DB_NAME', 'faker_db')
+            self.user = os.environ.get('DB_USER', 'faker_user')
+            self.password = os.environ.get('DB_PASSWORD', 'faker_password')
+        
         self.min_connections = int(os.environ.get('DB_MIN_CONN', 1))
         self.max_connections = int(os.environ.get('DB_MAX_CONN', 10))
     
@@ -114,11 +128,9 @@ def get_db_cursor(commit: bool = False):
 def execute_query(query: str, params: tuple = None) -> List[Dict[str, Any]]:
     """
     Execute a SELECT query and return results as list of dicts.
-    
     Args:
         query: SQL query string
         params: Query parameters
-    
     Returns:
         List of dictionaries representing rows
     """
@@ -130,11 +142,9 @@ def execute_query(query: str, params: tuple = None) -> List[Dict[str, Any]]:
 def execute_function(func_name: str, *args) -> List[Dict[str, Any]]:
     """
     Execute a database function and return results.
-    
     Args:
         func_name: Name of the function to call
         *args: Function arguments
-    
     Returns:
         List of dictionaries representing result rows
     """
@@ -146,11 +156,9 @@ def execute_function(func_name: str, *args) -> List[Dict[str, Any]]:
 def call_stored_procedure(proc_name: str, *args) -> List[Dict[str, Any]]:
     """
     Call a stored procedure (set-returning function).
-    
     Args:
         proc_name: Name of the procedure
         *args: Procedure arguments
-    
     Returns:
         List of result rows as dictionaries
     """
