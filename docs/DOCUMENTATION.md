@@ -363,12 +363,4 @@ This is achieved through:
 
 ## Performance
 
-Typical benchmark results:
-
-| Users | Time | Throughput |
-|-------|------|------------|
-| 100 | ~50ms | ~2,000/sec |
-| 1,000 | ~400ms | ~2,500/sec |
-| 10,000 | ~4s | ~2,500/sec |
-
-Performance is primarily bound by lookup table access and function call overhead.
+It's not realy good, but i think that problem in free trail)
