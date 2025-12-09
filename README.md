@@ -11,7 +11,7 @@
 **[Read full technical documentation here](docs/DOCUMENTATION.md)**
 
 ## 🚀 Live Demo
-**[https://faker-sql.onrender.com](https://faker-sql.onrender.com)**
+**[https://faker-sql.onrender.com](https://faker-sql-n6sb.onrender.com/)**
 
 ---
 
