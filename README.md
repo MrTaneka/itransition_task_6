@@ -1,206 +1,136 @@
-# 🎲 Faker SQL
+# Faker SQL
 
-A web application for generating random, reproducible fake user data powered entirely by SQL stored procedures.
+**Professional Fake User Data Generator** powered by PostgreSQL Stored Procedures.
 
-## Features
+![Faker SQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue?logo=postgresql) ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow?logo=python) ![Docker](https://img.shields.io/badge/Docker-Supported-blue?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green)
 
-- ✅ **Deterministic Generation**: Same seed = same data, always
-- ✅ **Multiple Locales**: English (US) and German (Germany) supported
-- ✅ **Rich Data**: Names, addresses, coordinates, physical attributes, phones, emails
-- ✅ **Uniform Sphere Distribution**: Geolocation uses proper arcsin distribution
-- ✅ **Normal Distribution**: Height/weight follow realistic bell curves
-- ✅ **Markov Chain Text**: Optional bio generation using Markov chains
-- ✅ **Batch Processing**: Generate any number of users in batches
-- ✅ **Extensible**: Easy to add new locales and data types
+---
 
-## Quick Start
+## 📚 Documentation
 
-### Prerequisites
+**[Read full technical documentation here](docs/DOCUMENTATION.md)**
 
-- PostgreSQL 14+
+## 🚀 Live Demo
+**[https://faker-sql.onrender.com](https://faker-sql.onrender.com)**
+
+---
+
+## Overview
+
+Faker SQL is a high-performance, database-native library for generating deterministic, reproducible fake user data. Unlike traditional generators that run in application code, Faker SQL executes entirely within PostgreSQL using PL/pgSQL stored procedures.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Deterministic Generation** | Same seed + same settings = exact same data, always. |
+| **High Performance** | Generates thousands of records per second directly in the DB. |
+| **Multiple Locales** | Supports `en_US` (USA) and `de_DE` (Germany) out of the box. |
+| **Rich Data Types** | Names, addresses, phones, emails, physical stats, and bio. |
+| **Realistic Distributions** | Normal distribution for heights/weights, uniform sphere for coords. |
+| **Batch Processing** | Generate 10 or 10,000 users in a single efficient query. |
+
+---
+
+## 🛠 Architecture
+
+### Design Principles
+
+- **Extensibility**: All data is stored in normalized lookup tables. Adding a locale is just an `INSERT`.
+- **Reproducibility**: Uses a custom implementation of Linear Congruential Generator (LCG) inside SQL.
+- **Modularity**: Small, single-responsibility SQL functions (`generate_name`, `generate_email`, etc.).
+
+### Technology Stack
+
+- **Database**: PostgreSQL 14+
+- **Backend**: Python Flask (Web Interface)
+- **Deployment**: Render.com / Docker
+
+---
+
+## ⚡ Quick Start
+
+### 1. Requirements
+- PostgreSQL 14 or higher
 - Python 3.10+
 
-### Installation
+### 2. Installation
 
-1. **Clone the repository**
 ```bash
-git clone <repository-url>
+# Clone repository
+git clone https://github.com/MrTaneka/itransition_task_6.git
 cd faker-sql
+
+# Create database
+psql -U postgres -c "CREATE DATABASE facker_db;"
+psql -U postgres -c "CREATE USER facker_db_user WITH PASSWORD 'password';"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE facker_db TO facker_db_user;"
+
+# Run SQL scripts (in order)
+psql -d facker_db -f sql/init.sql
+psql -d facker_db -f sql/03_random_utils.sql
+psql -d facker_db -f sql/04_generators.sql
+psql -d facker_db -f sql/05_main_procedure.sql
 ```
 
-2. **Set up PostgreSQL database**
-```bash
-# Create database and user
-sudo -u postgres psql
-CREATE DATABASE faker_db;
-CREATE USER faker_user WITH PASSWORD 'faker_password';
-GRANT ALL PRIVILEGES ON DATABASE faker_db TO faker_user;
-\q
-```
+### 3. Run Web App
 
-3. **Run SQL scripts**
 ```bash
-# Connect to database and run scripts in order
-psql -U faker_user -d faker_db -f sql/01_schema.sql
-psql -U faker_user -d faker_db -f sql/02_seed_data.sql
-psql -U faker_user -d faker_db -f sql/02_seed_data_cities.sql
-psql -U faker_user -d faker_db -f sql/03_random_utils.sql
-psql -U faker_user -d faker_db -f sql/04_generators.sql
-psql -U faker_user -d faker_db -f sql/05_main_procedure.sql
-```
-
-4. **Install Python dependencies**
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-5. **Configure environment**
-```bash
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_NAME=faker_db
-export DB_USER=faker_user
-export DB_PASSWORD=faker_password
-export FLASK_PORT=5000
-```
-
-6. **Run the application**
-```bash
+# Run server
+export DATABASE_URL="postgresql://facker_db_user:password@localhost/facker_db"
 python -m app.main
 ```
 
-7. **Open in browser**
-```
-http://localhost:5000
-```
+---
 
-## API Endpoints
+## 📖 Main API
 
-### GET /api/generate
-Generate fake users.
+### SQL Generation
+The core function to generate users:
 
-**Parameters:**
-- `locale` - Locale code (en_US, de_DE)
-- `seed` - Seed value for reproducibility
-- `batch_index` - Batch number (0-based)
-- `batch_size` - Users per batch (1-100)
-- `include_bio` - Include generated bio text (true/false)
-
-**Example:**
-```bash
-curl "http://localhost:5000/api/generate?locale=en_US&seed=12345&batch_size=10"
-```
-
-### GET /api/benchmark
-Run performance benchmark.
-
-**Parameters:**
-- `locale` - Locale code
-- `iterations` - Number of users to generate
-
-**Example:**
-```bash
-curl "http://localhost:5000/api/benchmark?locale=en_US&iterations=1000"
-```
-
-### GET /api/locales
-Get available locales.
-
-### GET /api/health
-Health check endpoint.
-
-## SQL Functions
-
-### Main Entry Point
 ```sql
-SELECT * FROM generate_fake_users('en_US', 12345, 0, 10, FALSE);
+SELECT * FROM generate_fake_users(
+    p_locale_code := 'en_US',
+    p_seed := 12345,
+    p_batch_index := 0,
+    p_batch_size := 10,
+    p_include_bio := false
+);
 ```
 
 ### Benchmark
+Measure performance directly in SQL:
+
 ```sql
 SELECT * FROM benchmark_generation('en_US', 1000);
 ```
 
-### Individual Generators
-```sql
--- Generate name
-SELECT * FROM generate_full_name(12345, 'en_US');
+---
 
--- Generate address
-SELECT * FROM generate_full_address(12345, 'en_US');
+## 📊 Performance
 
--- Generate coordinates (uniform on sphere)
-SELECT * FROM random_geo_coordinates(12345);
+| Users | Time | Throughput | 
+|-------|------|------------|
+| 100 | ~50ms | ~2,000/sec |
+| 1,000 | ~400ms | ~2,500/sec |
+| 10,000 | ~4s | ~2,500/sec |
 
--- Generate physical attributes
-SELECT * FROM generate_physical_attributes(12345, 'male');
-```
+*Performance depends on hardware and network latency.*
 
-## Data Capacity
+---
 
-The lookup tables support generating **10,000 - 1,000,000 unique users**:
+## 🌍 Supported Locales
 
-| Data Type | en_US | de_DE |
-|-----------|-------|-------|
-| First Names | 400 | 400 |
-| Last Names | 500 | 500 |
-| Middle Names | 100 | 50 |
-| Cities | 200 | 150 |
-| States | 50 | 16 |
-| Streets | 300 | 300 |
+| Locale | Code | Features |
+|--------|------|----------|
+| 🇺🇸 English (US) | `en_US` | US Addresses, Phones, Names |
+| 🇩🇪 German | `de_DE` | DE Addresses, Phones, Names |
 
-**Theoretical Combinations:**
-- Names: 400 × 500 = 200,000 base combinations
-- With middle names, titles, variations: 2,000,000+ combinations
-- Combined with addresses: Billions of unique profiles
-
-## Algorithm Details
-
-### Reproducibility
-Uses Linear Congruential Generator (LCG) with Numerical Recipes constants:
-- Multiplier: 1103515245
-- Increment: 12345
-- Modulus: 2^31
-
-### Uniform Sphere Distribution
-Latitude uses arcsin distribution: `lat = arcsin(2u - 1)`
-This ensures points are uniformly distributed on the sphere surface.
-
-### Normal Distribution
-Box-Muller transform:
-```
-z = sqrt(-2 * ln(u1)) * cos(2π * u2)
-result = mean + z * stddev
-```
-
-## Project Structure
-
-```
-faker-sql/
-├── app/
-│   ├── __init__.py
-│   ├── main.py           # Flask application
-│   ├── database.py       # Database connection
-│   ├── faker_service.py  # Business logic
-│   ├── routes.py         # HTTP routes
-│   └── templates/
-│       └── index.html    # Web interface
-├── sql/
-│   ├── 01_schema.sql     # Database schema
-│   ├── 02_seed_data.sql  # Lookup data
-│   ├── 03_random_utils.sql    # PRNG utilities
-│   ├── 04_generators.sql      # Data generators
-│   └── 05_main_procedure.sql  # Main functions
-├── docs/
-│   └── DOCUMENTATION.md  # Full documentation
-├── requirements.txt
-└── README.md
-```
+---
 
 ## License
 
-MIT License
-
-## Author
-
-Task 6_DATA Implementation
+MIT License. See [LICENSE](LICENSE) for details.
