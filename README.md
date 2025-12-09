@@ -108,29 +108,9 @@ Measure performance directly in SQL:
 SELECT * FROM benchmark_generation('en_US', 1000);
 ```
 
----
-
-## 📊 Performance
-
-| Users | Time | Throughput | 
-|-------|------|------------|
-| 100 | ~50ms | ~2,000/sec |
-| 1,000 | ~400ms | ~2,500/sec |
-| 10,000 | ~4s | ~2,500/sec |
-
-*Performance depends on hardware and network latency.*
-
----
-
 ## 🌍 Supported Locales
 
 | Locale | Code | Features |
 |--------|------|----------|
 | 🇺🇸 English (US) | `en_US` | US Addresses, Phones, Names |
 | 🇩🇪 German | `de_DE` | DE Addresses, Phones, Names |
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
