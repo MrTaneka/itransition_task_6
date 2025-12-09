@@ -18,6 +18,11 @@ class DatabaseConfig:
         database_url = os.environ.get('DATABASE_URL')
         
         if database_url:
+            # Add sslmode if not present (required for Render)
+            if '?' not in database_url:
+                database_url += '?sslmode=require'
+            elif 'sslmode' not in database_url:
+                database_url += '&sslmode=require'
             self.conninfo = database_url
         else:
             host = os.environ.get('DB_HOST', 'localhost')
@@ -28,7 +33,7 @@ class DatabaseConfig:
             self.conninfo = f"host={host} port={port} dbname={dbname} user={user} password={password}"
         
         self.min_connections = int(os.environ.get('DB_MIN_CONN', 1))
-        self.max_connections = int(os.environ.get('DB_MAX_CONN', 10))
+        self.max_connections = int(os.environ.get('DB_MAX_CONN', 5))
 
 
 class DatabasePool:
@@ -47,7 +52,8 @@ class DatabasePool:
             self._pool = ConnectionPool(
                 config.conninfo,
                 min_size=config.min_connections,
-                max_size=config.max_connections
+                max_size=config.max_connections,
+                timeout=60.0
             )
     
     def get_connection(self):
